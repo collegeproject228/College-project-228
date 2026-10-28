@@ -1,0 +1,820 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>КодоЛандия: учебный квест</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Rubik:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#14213D;--land:#22305C;--card:#1D2A52;--line:#3A4B86;--gold:#F2C14E;--mint:#7BDFB2;--coral:#FF7B7B;--paper:#F4EFE6;--dim:#9AA6C8}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:radial-gradient(1100px 560px at 50% -10%,#2B3C75,var(--ink));color:var(--paper);font:16px/1.5 Nunito,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.wrap{max-width:520px;margin:0 auto;padding:16px}
+h1{font:600 28px/1.1 Rubik,system-ui,sans-serif;margin:0}
+.sub{color:var(--dim);font-size:14px;margin:2px 0 12px}
+.hud{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.pill{background:var(--gold);color:#2A2108;border-radius:99px;padding:2px 12px;font-weight:700;font-size:14px;white-space:nowrap}
+.track{flex:1;height:10px;background:#0E1730;border-radius:9px;overflow:hidden}
+#bar{height:100%;width:0;background:var(--mint);transition:width .5s}
+.xp{font-size:13px;color:var(--dim);white-space:nowrap}
+.mentor{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+.mentor svg{flex:none;width:56px;height:56px}
+.bubble{background:var(--card);border:1px solid var(--line);border-radius:4px 16px 16px 16px;padding:12px 14px;min-height:64px;font-size:15px;flex:1}
+.map{width:100%;height:auto;display:block}
+.trail{fill:none;stroke:#3D4E86;stroke-width:5;stroke-dasharray:1 12;stroke-linecap:round}
+.prog{fill:none;stroke:var(--gold);stroke-width:5;stroke-linecap:round;transition:stroke-dasharray 1.4s ease}
+.node{cursor:pointer;outline:none}
+.node .hit{fill:transparent;stroke:none}
+.node.lock{opacity:.7}
+.node:focus-visible .hit{stroke:var(--paper);stroke-width:3;stroke-dasharray:4 4}
+.node.now .isl{animation:bob 3s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-6px)}}
+.em{font-size:36px}
+.nm{fill:var(--paper);font:600 14px Rubik,system-ui,sans-serif}
+.st{fill:var(--gold);font-size:15px}
+h2{font:600 22px/1.2 Rubik,system-ui,sans-serif;margin:4px 0}
+.meta{color:var(--dim);font-size:14px;margin:0 0 10px}
+.q{font-size:18px;margin:0 0 10px}
+pre{background:#0E1730;padding:12px;border-radius:12px;overflow-x:auto;font:14px/1.5 ui-monospace,Consolas,monospace;color:#CFE3FF;margin:0 0 10px}
+.opt{display:block;width:100%;text-align:left;padding:14px 16px;margin:8px 0;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--paper);font:inherit;min-height:48px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--gold)}
+.opt:disabled{color:var(--paper);cursor:default}
+.opt.ok{border-color:var(--mint);background:#1E4A4A}
+.opt.bad{border-color:var(--coral);background:#5A2A3A}
+.next{display:block;width:100%;background:var(--gold);color:#2A2108;border:0;border-radius:14px;padding:14px 22px;font:600 16px Rubik,system-ui,sans-serif;margin-top:12px;cursor:pointer}
+.back,.reset{background:none;border:0;color:var(--dim);font:inherit;padding:8px 0;cursor:pointer}
+.reset{font-size:13px;margin-top:16px}
+.result{text-align:center;padding:20px 0}
+.big{font-size:44px;color:var(--gold);letter-spacing:6px}
+textarea,input{display:block;width:100%;background:#0E1730;color:var(--paper);border:2px solid var(--line);border-radius:12px;padding:12px;font:15px/1.5 Nunito,system-ui,sans-serif;margin:8px 0}
+textarea:focus,input:focus{outline:none;border-color:var(--gold)}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.tbtn{background:none;border:1px solid var(--line);color:var(--paper);border-radius:99px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+[hidden]{display:none!important}
+.mrow{display:flex;gap:8px;align-items:center;margin:8px 0}
+.mrow span{flex:1;font-weight:600}
+select{flex:1.4;min-width:0;background:#0E1730;color:var(--paper);border:2px solid var(--line);border-radius:10px;padding:10px;font:inherit}
+.srow{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:8px 0}
+.srow b{display:block}.srow small{color:var(--dim)}.tag{color:var(--coral);font-size:14px}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.row input{flex:1;min-width:140px;width:auto}
+#qsel{width:100%;flex:none;margin-bottom:8px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--gold);color:#2A2108;padding:10px 16px;border-radius:99px;font-weight:700;z-index:9;max-width:90vw;text-align:center}
+.wave{fill:none;stroke:rgba(255,255,255,.28);stroke-width:2;transform-box:fill-box;transform-origin:center;animation:ripple 3.2s ease-out infinite}
+@keyframes ripple{from{transform:scale(.8);opacity:.9}to{transform:scale(1.3);opacity:0}}
+.cloud,.boat{pointer-events:none}
+.cloud{animation:drift 14s ease-in-out infinite alternate}.c2{animation-duration:19s;animation-direction:alternate-reverse}
+@keyframes drift{to{transform:translateX(34px)}}
+.boat{font-size:26px;animation:sail 9s ease-in-out infinite alternate}
+@keyframes sail{from{transform:translate(-30px,0)}to{transform:translate(30px,-6px)}}
+.eye{transform-box:fill-box;transform-origin:center;animation:blink 4s infinite}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+.mentor svg{animation:float 3s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-3px)}}
+.pop,.opt.ok{animation:pop .3s ease}
+@keyframes pop{from{transform:scale(.96);opacity:.6}}
+.opt.bad{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+#main>*{animation:fadein .3s ease both}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}}
+.cf{position:fixed;top:-14px;width:8px;height:12px;border-radius:2px;z-index:8;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+.cmsg{padding:10px 12px;border-radius:12px;margin:6px 0;font-size:15px;white-space:pre-wrap}
+.cmsg.bot{background:var(--card);border:1px solid var(--line)}.cmsg.me{background:#2E4080;margin-left:24px}
+#ask{margin-top:10px}#chat{margin-top:10px}
+@media (max-width:420px){.xp{display:none}}
+.brand{display:flex;gap:10px;align-items:center;background:none;border:0;color:inherit;font:inherit;text-align:left;padding:0;cursor:pointer}
+.hero h2{font-size:30px;margin-bottom:6px}.hero p{color:var(--dim);margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.chips span{background:var(--card);border:1px solid var(--line);border-radius:99px;padding:4px 12px;font-size:13px}
+.roles{display:grid;gap:12px;margin-top:16px}
+.role{text-align:left;padding:18px;border-radius:18px;border:2px solid var(--line);background:linear-gradient(160deg,#27386F,#1D2A52);color:var(--paper);font:inherit;cursor:pointer;transition:transform .15s,border-color .15s}
+.role:hover{border-color:var(--gold);transform:translateY(-2px)}
+.role b{display:block;font:600 20px Rubik,system-ui,sans-serif}.role small{color:var(--dim);font-size:14px}
+.panel{background:rgba(29,42,82,.6);border:1px solid var(--line);border-radius:18px;padding:14px;margin:10px 0}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 6px;text-align:center}
+.card b{display:block;font:600 26px Rubik,system-ui,sans-serif;color:var(--gold)}.card small{color:var(--dim)}
+.pb{height:8px;background:#0E1730;border-radius:6px;overflow:hidden;margin:8px 0 4px}
+.pb i{display:block;height:100%;background:var(--mint);border-radius:6px}.pb.bad i{background:var(--coral)}
+.foot{color:var(--dim);font-size:12px;margin-top:18px;text-align:center}
+@media (min-width:900px){
+  .wrap{max-width:1080px;display:grid;grid-template-columns:380px minmax(0,1fr);column-gap:32px;align-items:start;padding-top:28px}
+  .wrap>.top,.wrap>.hud,.wrap>.mentor,.wrap>.tools,.wrap>.foot{grid-column:1}
+  #main{grid-column:2;grid-row:1/span 6}
+  .map{max-height:82vh;margin:0 auto}
+  .roles{grid-template-columns:1fr 1fr}
+}
+input[type=radio],input[type=checkbox]{width:auto;display:inline-block;margin:0}
+.qe{border-top:1px solid var(--line);padding-top:10px;margin-top:12px}
+.qe textarea{min-height:64px;resize:vertical}
+.orow{display:flex;gap:8px;align-items:center}.orow input[type=text]{flex:1}
+.del{display:flex;gap:8px;align-items:center;color:var(--coral);font-size:14px;margin-top:6px}
+.cert{margin:14px 0;padding:28px 20px;text-align:center;border:3px double var(--gold);border-radius:18px;background:linear-gradient(160deg,#27386F,#1D2A52)}
+.cert h2{font-size:30px;color:var(--gold)}.cert p{color:var(--dim);margin:6px 0}
+.cname{font:600 28px Rubik,system-ui,sans-serif;margin:8px 0}.cq{font:600 20px Rubik,system-ui,sans-serif;color:var(--gold)}
+@media print{
+  body{background:#fff}
+  .wrap{display:block;max-width:none}
+  .wrap>*:not(#main),.back,#prt,.toast,.cf{display:none!important}
+  #main>*{animation:none}
+  .cert,.cert *{color:#111!important;background:#fff!important;border-color:#B8860B}
+}
+.lab{display:flex;align-items:center;gap:8px;font-size:14px;flex:1}.lab select{flex:1}
+.dl{color:var(--coral)}
+button:focus-visible{outline:3px solid var(--paper);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><button class="brand" id="home" aria-label="На главную"><svg viewBox="0 0 40 40" width="42" height="42" aria-hidden="true"><rect width="40" height="40" rx="12" fill="#F2C14E"/><ellipse cx="20" cy="29" rx="14" ry="5" fill="#5FBF8B"/><text x="20" y="24" text-anchor="middle" font-size="15" font-weight="700" fill="#2A2108" font-family="Rubik,sans-serif">&lt;/&gt;</text></svg><div><h1>КодоЛандия</h1><p class="sub">Учебный квест по лекциям преподавателя</p></div></button><button class="tbtn" id="teach">Преподавателю</button></div>
+  <div class="hud"><span class="pill" id="lvl"></span><div class="track"><div id="bar"></div></div><span class="xp" id="xp"></span><button class="tbtn" id="ach" aria-label="Достижения">🏆 <span id="ac">0</span></button><button class="tbtn" id="snd" aria-label="Звук"></button></div>
+  <div class="mentor">
+    <svg viewBox="0 0 56 56" aria-hidden="true">
+      <line x1="28" y1="5" x2="28" y2="12" stroke="#F2C14E" stroke-width="2"/><circle cx="28" cy="5" r="3" fill="#F2C14E"/>
+      <rect x="8" y="12" width="40" height="34" rx="12" fill="#2E4080" stroke="#F2C14E" stroke-width="2"/>
+      <circle class="eye" cx="21" cy="27" r="4" fill="#7BDFB2"/><circle class="eye" cx="35" cy="27" r="4" fill="#7BDFB2"/>
+      <path id="mouth" d="M20 38 Q28 44 36 38" fill="none" stroke="#F2C14E" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+    <div class="bubble" id="say" aria-live="polite"></div>
+  </div>
+  <main id="main"></main>
+  <div class="tools"><button class="reset" id="reset">Начать заново</button> <button class="reset" id="exp">Скачать мои результаты</button> <button class="reset" id="cfg">⚙ Подключение</button></div>
+  <p class="foot">Дипломный проект · Актюбинский высший политехнический колледж<br><span id="aist"></span></p>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+<script>
+// ===== Данные: локации и вопросы (преподаватель мог бы редактировать их в админке) =====
+const DEMO=[
+ {n:'Остров переменных',e:'🏝️',x:85,y:80,q:[
+  {t:'Какой тип у значения «42» (в кавычках) в JavaScript?',o:['number','string','boolean'],a:1,w:'Кавычки превращают значение в строку, даже если внутри цифры.'},
+  {t:'Что выведет код?',c:'let a = 5;\na = a + 2;\nconsole.log(a);',o:['5','7','52'],a:1,w:'Сначала a равно 5, потом ему присвоили a + 2, то есть 7.'},
+  {k:'text',t:'Каким ключевым словом объявляют переменную, значение которой можно менять позже? Впиши ответ.',a:['let'],w:'const делает значение постоянным, а let позволяет его менять.'}]},
+ {n:'Лес условий',e:'🌲',x:275,y:200,q:[
+  {t:'Верно ли утверждение: выражение 5 > 3 даёт результат true?',o:['Верно','Неверно'],a:0,w:'Пять больше трёх, поэтому выражение истинно: true.'},
+  {t:'Что означает === в JavaScript?',o:['присваивание','больше или равно','строгое сравнение'],a:2,w:'=== сравнивает и значение, и тип. Присваивание записывается одним знаком =.'},
+  {t:'Что выведет код?',c:'let x = 10;\nif (x < 5) console.log("A");\nelse console.log("B");',o:['A','B','ничего'],a:1,w:'10 не меньше 5, условие ложно, поэтому срабатывает ветка else.'}]},
+ {n:'Пещера циклов',e:'⛏️',x:85,y:330,q:[
+  {t:'Что выведет цикл?',c:'for (let i = 0; i < 3; i++) {\n  console.log(i);\n}',o:['1 2 3','0 1 2','0 1 2 3'],a:1,w:'i начинается с 0 и растёт, пока i < 3, поэтому выводятся 0, 1 и 2.'},
+  {k:'match',t:'Соедини цикл с его особенностью.',p:[['for','Счётчик задаётся в одной строке'],['while','Условие проверяется до выполнения тела'],['do...while','Тело выполнится хотя бы один раз']],w:'Так циклы отличаются друг от друга.'},
+  {t:'Найди ошибку: что не так с этим циклом?',c:'let i = 0;\nwhile (i < 3) {\n  console.log(i);\n}',o:['Он никогда не остановится','Здесь нужно слово for','Нельзя писать console.log'],a:0,w:'Значение i не меняется, условие всегда истинно. Нужно добавить i++ внутри цикла.'}]},
+ {n:'Башня функций',e:'🏰',x:270,y:455,q:[
+  {t:'Как вызвать эту функцию?',c:'function hello() {\n  console.log("Привет!");\n}',o:['hello','hello()','call hello'],a:1,w:'Круглые скобки запускают функцию. Без них это просто ссылка на неё.'},
+  {t:'Что делает return?',o:['Выводит текст в консоль','Создаёт новый цикл','Возвращает значение и завершает функцию'],a:2,w:'return отдаёт результат туда, откуда функцию вызвали, и останавливает её.'},
+  {t:'Что выведет код?',c:'function sum(a, b) {\n  return a + b;\n}\nconsole.log(sum(2, 3));',o:['23','5','undefined'],a:1,w:'Функция складывает 2 и 3 и возвращает 5.'}]}
+];
+
+// расширенное демо: по 5 вопросов на остров и 6 островов
+DEMO[0].q.push(
+ {t:'Верно ли утверждение: имя переменной в JavaScript может начинаться с цифры?',o:['Верно','Неверно'],a:1,w:'Имя не может начинаться с цифры. Допустимо name1, но не 1name.'},
+ {t:'Что выведет код?',c:'let x = "5";\nlet y = 3;\nconsole.log(x + y);',o:['8','53','NaN'],a:1,w:'Строка "5" плюс число 3 даёт склеивание строк: 53.'});
+DEMO[1].q.push(
+ {k:'text',t:'Каким словом в JavaScript записывается ветка «иначе»? Впиши ответ.',a:['else'],w:'Если условие в if ложно, выполняется блок после else.'},
+ {t:'Что выведет код?',c:'let age = 18;\nif (age >= 18 && age < 65) console.log("A");\nelse console.log("B");',o:['A','B','ошибка'],a:0,w:'Оба условия истинны: 18 >= 18 и 18 < 65, поэтому выводится A.'});
+DEMO[2].q.push(
+ {t:'Какое слово прерывает выполнение цикла?',o:['break','stop','exit'],a:0,w:'Оператор break сразу выходит из цикла.'},
+ {k:'text',t:'Какое число выведет код? Впиши ответ.',c:'let s = 0;\nfor (let i = 1; i <= 4; i++) {\n  s += i;\n}\nconsole.log(s);',a:['10'],w:'Складываем 1+2+3+4, получается 10.'});
+DEMO[3].q.push(
+ {t:'Верно ли утверждение: у функции может быть несколько параметров?',o:['Верно','Неверно'],a:0,w:'Параметры перечисляют через запятую, например function f(a, b, c).'},
+ {t:'Что выведет код?',c:'const double = x => x * 2;\nconsole.log(double(4));',o:['4','8','x * 2'],a:1,w:'Стрелочная функция умножает аргумент на 2: 4 * 2 = 8.'});
+DEMO.push(
+ {n:'Вулкан массивов',q:[
+  {t:'Что выведет код?',c:'const a = [10, 20, 30];\nconsole.log(a[1]);',o:['10','20','30'],a:1,w:'Индексы массива начинаются с нуля, поэтому a[1] это второй элемент: 20.'},
+  {t:'Какое свойство возвращает количество элементов массива?',o:['size','count','length'],a:2,w:'Для массивов используется свойство length.'},
+  {k:'text',t:'Каким методом добавляют элемент в конец массива? Впиши название без скобок.',a:['push'],w:'arr.push(x) добавляет x в конец массива.'},
+  {k:'match',t:'Соедини метод массива с действием.',p:[['push','Добавляет в конец'],['pop','Удаляет последний элемент'],['shift','Удаляет первый элемент']],w:'Эти методы меняют сам массив.'},
+  {t:'Верно ли утверждение: в массиве JavaScript могут лежать значения разных типов?',o:['Верно','Неверно'],a:0,w:'Массив может содержать числа, строки и даже другие массивы.'}]},
+ {n:'Космос объектов',q:[
+  {t:'Что выведет код?',c:'const user = { name: "Аня", age: 19 };\nconsole.log(user.name);',o:['Аня','name','19'],a:0,w:'user.name обращается к свойству name, его значение «Аня».'},
+  {t:'Как правильно записывается объект в JavaScript?',o:['{ a: 1, b: 2 }','[ a: 1, b: 2 ]','( a = 1, b = 2 )'],a:0,w:'Объект записывают в фигурных скобках парами ключ: значение.'},
+  {k:'text',t:'Как называется пара «ключ: значение» внутри объекта? Впиши одним словом.',a:['свойство'],w:'Каждая такая пара называется свойством объекта.'},
+  {t:'Верно ли утверждение: свойства объекта можно добавлять после его создания?',o:['Верно','Неверно'],a:0,w:'Новое свойство добавляют записью obj.key = значение.'},
+  {k:'match',t:'Соедини запись с тем, что она делает.',p:[['obj.name','Читает свойство'],['obj.age = 20','Меняет значение'],['delete obj.name','Удаляет свойство']],w:'Так выглядят три основные операции со свойствами.'}]});
+const PRAISE=['Верно!','Точно!','Отлично!','В яблочко!'];
+const ICONS=['🏝️','🌲','⛏️','🏰','🌋','🚀'];
+const PAL=['#5FBF8B','#4FA36F','#C79A5B','#8E86D9','#E0735C','#5BA9D6'];
+// облака и кораблик на карте
+const deco=h=>`<g class="cloud" opacity=".16"><ellipse cx="60" cy="34" rx="34" ry="9" fill="#fff"/><ellipse cx="86" cy="27" rx="22" ry="8" fill="#fff"/></g><g class="cloud c2" opacity=".12"><ellipse cx="290" cy="${Math.round(h*.55)}" rx="38" ry="10" fill="#fff"/><ellipse cx="262" cy="${Math.round(h*.55)-8}" rx="22" ry="8" fill="#fff"/></g><text class="boat" x="165" y="${Math.round(h*.3)}" aria-hidden="true">⛵</text>`;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
+const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+// ===== Облако (Supabase): серверы по коду, как в игре =====
+// Адрес проекта и ключ anon можно вписать сюда или ввести на экране «⚙ Подключение» (сохранятся в браузере).
+const SB_URL='';
+const SB_KEY='';
+const CFG=load('kodolandia_cfg',{});
+let SB={u:SB_URL||CFG.u||'',k:SB_KEY||CFG.k||'',t:CFG.t||''}; // t: код преподавателя для ИИ
+let CLOUD=!!(SB.u&&SB.k);
+let ROOM=load('kodolandia_room',null);       // сервер, на который вошёл студент
+let SERVERS=load('kodolandia_servers',[]);   // серверы, созданные на этом устройстве: код и ключ админа
+let STAT=null,STATIV=null;                   // статистика сервера, открытая в кабинете
+async function sb(path,o={}){
+  const r=await fetch(SB.u+path,{method:o.method||'GET',headers:{apikey:SB.k,authorization:'Bearer '+SB.k,'content-type':'application/json'},body:o.body?JSON.stringify(o.body):undefined});
+  const txt=await r.text();let j=null;try{j=txt?JSON.parse(txt):null}catch(e){}
+  if(!r.ok)throw new Error((j&&(j.message||j.msg||j.error_description||j.error))||'Ошибка '+r.status);
+  return j;
+}
+const rpc=(fn,args)=>sb('/rest/v1/rpc/'+fn,{method:'POST',body:args});
+const rnd=(n,al)=>Array.from(typeof crypto!=='undefined'&&crypto.getRandomValues?crypto.getRandomValues(new Uint8Array(n)):Array.from({length:n},()=>Math.random()*256|0),b=>al[b%al.length]).join('');
+// библиотека квестов: у каждого есть предмет и группа, прогресс хранится отдельно
+let LIB=load('kodolandia_lib',null);
+if(!Array.isArray(LIB)||!LIB.length)LIB=[{id:'demo',name:'Основы JavaScript',group:'демо',quest:DEMO,v:2}];
+{const d=LIB.find(l=>l.id==='demo');if(d&&d.v!==2){d.quest=DEMO;d.v=2;store('kodolandia_lib',LIB);try{localStorage.removeItem('kodolandia_s_demo')}catch(e){}}} // обновление демо до новой версии
+let QID=load('kodolandia_cur','demo');
+if(!LIB.some(l=>l.id===QID))QID=LIB[0].id;
+let Q=LIB.find(l=>l.id===QID).quest;
+const cq=()=>LIB.find(l=>l.id===QID)||(ROOM?{name:ROOM.title,group:ROOM.group}:LIB[0]);
+const qname=l=>l.name+(l.group?' · '+l.group:'');
+let ACHV=load('kodolandia_ach',{}); // достижения общие для всех квестов
+// позиции островов и тропа между ними строятся автоматически
+const pt=i=>({x:i%2?275:85,y:80+i*125});
+function trail(){let d='M'+pt(0).x+' '+pt(0).y;for(let i=1;i<Q.length;i++){const a=pt(i-1),b=pt(i),m=(a.y+b.y)/2;d+=`C${a.x} ${m} ${b.x} ${m} ${b.x} ${b.y}`}return d}
+
+// ===== Состояние (сохраняется в браузере) =====
+const loadS=id=>{const s=Object.assign({got:{},stars:{},log:[],streak:0},load('kodolandia_s_'+id,{}));s.name=s.name||load('kodolandia_name','');return s};
+let S=loadS(QID);
+if(CLOUD&&ROOM){QID='room_'+ROOM.code;Q=ROOM.quest;S=loadS(QID)} // студент остаётся на своём сервере
+const save=()=>{store('kodolandia_s_'+QID,S);store('kodolandia_name',S.name)};
+const $=id=>document.getElementById(id);
+const main=$('main');
+const xp=()=>Object.keys(S.got).length*10;
+const doneCount=()=>Q.filter((_,i)=>S.stars[i]).length;
+let cur=null;
+
+// ===== Интерфейс: шапка и наставник =====
+function hud(){
+  const x=xp(),max=Q.reduce((s,l)=>s+l.q.length*10,0);
+  {const L=Math.floor(x/30)+1;$('lvl').textContent='Ур. '+L+' · '+['Новичок','Кодер','Практик','Мастер','Гуру'][Math.min(L-1,4)]}
+  $('xp').textContent=x+' опыта';$('snd').textContent=MUTE?'🔇':'🔊';$('ac').textContent=Object.keys(ACHV).length;
+  $('bar').style.width=(x>=max?100:(x%30)/30*100)+'%';
+}
+function say(t,m){
+  $('say').textContent=t;{const b=$('say');b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop')}
+  $('mouth').setAttribute('d',m==='no'?'M20 42 Q28 36 36 42':m==='hm'?'M21 40 L35 40':'M20 38 Q28 44 36 38');
+}
+
+// ===== Экран: карта =====
+function showMap(){
+  cur=null;
+  if(!S.name){showName();return}
+  const d=doneCount(),total=Q.length,P=trail(),h=pt(total-1).y+105;
+  let s=`<svg class="map" viewBox="0 0 360 ${h}" role="group" aria-label="Карта квеста">${deco(h)}<path class="trail" d="${P}"/><path class="prog" id="prog" d="${P}" pathLength="100" style="stroke-dasharray:0 100"/>`;
+  Q.forEach((l,i)=>{
+    const {x,y}=pt(i),open=i<=d,st=S.stars[i]||0,nm=l.n.length>20?l.n.slice(0,19)+'…':l.n;
+    const pal=PAL[i%PAL.length];
+    s+=`<g class="node${open?'':' lock'}${i===d&&d<total?' now':''}" data-i="${i}" tabindex="${open?0:-1}" role="button" aria-label="${esc(l.n)}${open?'':', закрыто'}">
+      <circle class="hit" cx="${x}" cy="${y}" r="52"/>
+      <g class="isl">
+        <ellipse class="wave" cx="${x}" cy="${y+16}" rx="56" ry="22" style="animation-delay:${i*.7}s"/>
+        <ellipse cx="${x}" cy="${y+14}" rx="48" ry="19" fill="${open?'#F2DDA6':'#2E3A66'}"/>
+        <ellipse cx="${x}" cy="${y+9}" rx="40" ry="15" fill="${open?pal:'#44527F'}"/>
+        <text class="em" x="${x}" y="${y+8}" text-anchor="middle">${open?ICONS[i%ICONS.length]:'🔒'}</text>
+      </g>
+      <text class="nm" x="${x}" y="${y+54}" text-anchor="middle">${esc(nm)}</text>
+      ${st?`<text class="st" x="${x}" y="${y+72}" text-anchor="middle">${'★'.repeat(st)}${'☆'.repeat(3-st)}</text>`:''}</g>`;
+  });
+  const sel=LIB.length>1&&!ROOM?`<select id="qsel" aria-label="Квест">${LIB.map(l=>`<option value="${l.id}"${l.id===QID?' selected':''}>${esc(qname(l))}</option>`).join('')}</select>`:'';
+  main.innerHTML=roomBar()+sel+s+'</svg>'+(d>=total?'<button class="next" id="cert">Получить сертификат</button>':'');if(ROOM)$('leave').onclick=leaveRoom;if(sel)$('qsel').onchange=e=>switchQuest(e.target.value);if(d>=total)$('cert').onclick=showCert;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{$('prog').style.strokeDasharray=Math.min(100,d*100/Math.max(1,total-1))+' 100'}));
+  say(d>=total?'Ты прошёл все локации! Можешь вернуться и набрать три звезды.':d===0?'Приятно познакомиться, '+S.name+'! Начни с первого острова: нажми на него.':'Выбирай локацию. Новая открывается, когда пройдена предыдущая.');
+}
+function openLoc(i){
+  if(i>doneCount()){say('Эта локация пока закрыта. Сначала пройди «'+Q[i-1].n+'».','hm');return}
+  cur={i,k:0,miss:0};showQ();
+}
+
+// ===== Экран: вопрос (типы: mc, text, match) =====
+const norm=s=>String(s).toLowerCase().replace(/ё/g,'е').replace(/[\s.,;:!?«»"']/g,'');
+function showQ(){
+  const l=Q[cur.i],q=l.q[cur.k],k=q.k||'mc';
+  main.innerHTML=`<button class="back" id="back">← К карте</button><h2>${ICONS[cur.i%ICONS.length]} ${esc(l.n)}</h2><p class="meta">Вопрос ${cur.k+1} из ${l.q.length} · <span id="tm">⏱ 0 с</span></p><p class="q">${esc(q.t)}</p>${q.c?'<pre id="code"></pre>':''}<div id="opts"></div><button class="next" id="next" hidden></button><button class="tbtn" id="ask" hidden>🤖 Объясни своими словами</button><div id="chat"></div>`;
+  if(q.c)$('code').textContent=q.c;
+  const box=$('opts');
+  if(k==='text'){
+    box.innerHTML='<input id="ans" autocomplete="off" placeholder="Твой ответ"><button class="next" id="chk">Проверить</button>';
+    $('ans').onkeydown=e=>{if(e.key==='Enter')$('chk').click()};
+    $('chk').onclick=()=>{
+      const v=$('ans').value;if(!v.trim())return;
+      const ok=[].concat(q.a).some(a=>norm(a)===norm(v));
+      $('ans').disabled=true;$('chk').hidden=true;
+      answered(ok,(ok?'':'Правильный ответ: '+[].concat(q.a)[0]+'. ')+q.w,v);
+    };
+  }else if(k==='match'){
+    const rights=shuffle(q.p.map(x=>x[1]));
+    box.innerHTML=q.p.map((x,i)=>`<div class="mrow"><span>${esc(x[0])}</span><select aria-label="${esc(x[0])}"><option value="">Выбери…</option>${rights.map(r=>`<option>${esc(r)}</option>`).join('')}</select></div>`).join('')+'<button class="next" id="chk">Проверить</button>';
+    $('chk').onclick=()=>{
+      const sel=[...box.querySelectorAll('select')];
+      if(sel.some(s=>!s.value)){say('Выбери пару для каждого пункта.','hm');return}
+      const ok=sel.every((s,i)=>s.value===q.p[i][1]);
+      sel.forEach((s,i)=>{s.disabled=true;s.style.borderColor=s.value===q.p[i][1]?'var(--mint)':'var(--coral)'});
+      $('chk').hidden=true;
+      answered(ok,(ok?'':'Правильно: '+q.p.map(x=>x[0]+' → '+x[1]).join('; ')+'. ')+q.w,sel.map((s,i)=>q.p[i][0]+' → '+s.value).join('; '));
+    };
+  }else{
+    q.o.forEach((o,j)=>{const b=document.createElement('button');b.className='opt';b.textContent=o;b.onclick=()=>pick(j,b);box.append(b)});
+  }
+  $('back').onclick=showMap;
+  cur.t0=Date.now();clearInterval(cur.iv);
+  const iv=setInterval(()=>{const e=$('tm');if(!cur||!e){clearInterval(iv);return}e.textContent='⏱ '+Math.round((Date.now()-cur.t0)/1000)+' с'},1000);cur.iv=iv;
+  say(cur.k===0?'Читай внимательно. За каждый верный ответ с первой попытки даю 10 опыта.':'Следующий вопрос. Ты справишься!');
+}
+function pick(j,btn){
+  const q=Q[cur.i].q[cur.k],btns=[...document.querySelectorAll('.opt')];
+  btns.forEach(b=>b.disabled=true);btns[q.a].classList.add('ok');
+  if(j!==q.a)btn.classList.add('bad');
+  answered(j===q.a,q.w,q.o[j]);
+}
+// общий итог ответа: опыт, журнал для преподавателя, кнопка «Дальше»
+function answered(ok,expl,given){
+  clearInterval(cur.iv);sfx(ok?'ok':'bad');
+  const sec=Math.round((Date.now()-cur.t0)/1000),key=cur.i+'-'+cur.k,fresh=ok&&!S.got[key];
+  if(ok)S.got[key]=1;else cur.miss++;
+  S.streak=ok?(S.streak||0)+1:0;
+  S.log.push({i:cur.i,k:cur.k,ok:ok?1:0,s:sec});
+  if(ok)unlock('first');
+  if(S.streak>=5)unlock('streak');
+  if(S.log.filter(e=>e.ok&&e.s<=10).length>=5)unlock('fast');
+  say(ok?PRAISE[Math.floor(Math.random()*PRAISE.length)]+' '+expl+(fresh?' +10 опыта.':'')+(sec<=10?' Быстро: '+sec+' с!':''):'Не совсем. '+expl,ok?'ok':'no');
+  save();hud();
+  if(ROOM)rpc('kl_answer',{p_token:ROOM.token,p_island:cur.i,p_q:cur.k,p_ok:ok,p_sec:Math.min(sec,3600),p_progress:{stars:S.stars,got:S.got}},true).catch(()=>{});
+  const n=$('next');n.hidden=false;n.textContent=cur.k<Q[cur.i].q.length-1?'Дальше':'Завершить локацию';
+  n.onclick=()=>{cur.k++;cur.k<Q[cur.i].q.length?showQ():finish()};n.focus();
+  if(!ok){const a=$('ask'),q=Q[cur.i].q[cur.k];a.hidden=false;a.onclick=()=>{a.hidden=true;openChat(q,given)}}
+}
+
+// ===== Экран: результат =====
+function finish(){
+  const stars=cur.miss===0?3:cur.miss===1?2:1,i=cur.i;
+  S.stars[i]=Math.max(S.stars[i]||0,stars);save();
+  if(ROOM)rpc('kl_save',{p_token:ROOM.token,p_progress:{stars:S.stars,got:S.got}},true).catch(()=>{});
+  const all=doneCount()>=Q.length;
+  if(cur.miss===0)unlock('clean');if(all)unlock('master');sfx('win');if(stars===3||all)confetti();
+  main.innerHTML=`<div class="result"><div class="big">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</div><h2>Локация пройдена!</h2><p>Ошибок: ${cur.miss}. ${i<Q.length-1?'Открыта следующая локация.':'Это была последняя локация.'}</p><button class="next" id="home">На карту</button></div>`;
+  $('home').onclick=showMap;$('home').focus();
+  say(all?'Ура, квест пройден! Из тебя получится отличный программист.':stars===3?'Без единой ошибки! Так держать.':'Хороший результат. Вернись сюда позже, чтобы набрать три звезды.',stars===3||all?'ok':'hm');
+}
+
+// ===== Генераторы: лекция -> острова, вопросы, ответы =====
+const STOP=new Set('который которая которые которых этого этой этом этот также можно может должен должна должны очень будет было были есть если когда потому между после перед через чтобы только более всего других другие'.split(' '));
+const words=s=>s.match(/[A-Za-zА-Яа-яЁё0-9_]{5,}/g)||[];
+const sents=s=>(s.match(/[^.!?]+[.!?]+/g)||[]).map(x=>x.trim());
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+// Простой режим (без ИИ): абзац = остров, из предложений делаются вопросы «вставь слово»
+function offlineGen(text,isl=5,per=5){
+  let paras=[],h='';
+  text.split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean).forEach(p=>{if(p.length<60&&!/[.!?]$/.test(p))h=p;else{paras.push(h?h+'\n'+p:p);h=''}});
+  if(paras.length<2){const ss=sents(text);paras=[];const step=Math.max(per,Math.ceil(ss.length/isl));for(let i=0;i<ss.length;i+=step)paras.push(ss.slice(i,i+step).join(' '))}
+  paras=paras.filter(p=>p.length>60).slice(0,isl);
+  const pool=[...new Set(words(text).map(w=>w.toLowerCase()).filter(w=>!STOP.has(w)))];
+  const out=[];
+  paras.forEach(p=>{
+    const lines=p.split('\n'),head=lines.length>1&&lines[0].length<60&&!/[.!?]$/.test(lines[0])?lines.shift().trim():'';
+    const body=lines.join(' '),qs=[];
+    for(const s of sents(body).filter(s=>s.length>=40&&s.length<=220)){
+      if(qs.length>=per)break;
+      const ws=words(s).filter(w=>!STOP.has(w.toLowerCase())).sort((a,b)=>b.length-a.length);
+      if(!ws.length)continue;
+      const key=ws[0],kl=key.toLowerCase();
+      const dis=shuffle(pool.filter(w=>w!==kl&&Math.abs(w.length-key.length)<=3)).slice(0,2);
+      if(dis.length<2)continue;
+      const o=shuffle([kl,...dis]);
+      const n=qs.length%3,blank=s.replace(key,'_____');
+      if(n===1){const ok=Math.random()<.5;qs.push({t:'Верно ли утверждение? '+(ok?s:s.replace(key,dis[0])),o:['Верно','Неверно'],a:ok?0:1,w:'Исходное предложение: '+s})}
+      else if(n===2)qs.push({k:'text',t:'Впиши пропущенное слово: '+blank,a:kl,w:'Предложение целиком: '+s});
+      else qs.push({t:'Вставь пропущенное слово: '+blank,o,a:o.indexOf(kl),w:'Правильно: «'+kl+'». Предложение целиком: '+s});
+    }
+    if(qs.length)out.push({n:head||body.split(/\s+/).slice(0,4).join(' '),q:qs});
+  });
+  return out;
+}
+// Режим ИИ: запрос к API Claude, ответ в формате JSON
+const PROMPT='Ты помощник преподавателя колледжа. По тексту лекции составь учебный квест на русском языке: от 2 до 6 островов (тем), в каждом ровно 3 вопроса. Опирайся только на текст лекции и используй РАЗНЫЕ типы вопросов (поле k): "mc" (3 варианта o, a это номер верного, начиная с 0), "tf" (вопрос «Верно ли утверждение…», o это ["Верно","Неверно"], a равно 0 или 1), "text" (ответ вводится словом, a это строка или массив допустимых ответов, поля o нет), "match" (поле p это массив из 3 пар ["термин","определение"], полей o и a нет). Верни ТОЛЬКО JSON без пояснений в формате {"islands":[{"name":"название темы","questions":[{"k":"mc","t":"вопрос","c":"фрагмент кода или пустая строка","o":["вариант 1","вариант 2","вариант 3"],"a":0,"w":"короткое объяснение верного ответа"}]}]}. Лекция:\n\n';
+async function aiGen(text,key,isl,per){
+  const raw=await callAI({model:'claude-sonnet-5-5',max_tokens:8000,messages:[{role:'user',content:PROMPT.replace('от 2 до 6 островов (тем), в каждом ровно 3 вопроса','ровно '+isl+' островов (тем), в каждом ровно '+per+' вопросов')+text}]});
+  return clean(JSON.parse(raw.match(/\{[\s\S]*\}/)[0]).islands);
+}
+// Проверка формата: плохие вопросы отбрасываются
+function okq(q){
+  if(!q||!q.t)return false;const k=q.k||'mc';
+  if(k==='text')return q.a!==undefined&&q.a!=='';
+  if(k==='match')return Array.isArray(q.p)&&q.p.length>=2&&q.p.every(x=>Array.isArray(x)&&x.length===2);
+  return Array.isArray(q.o)&&q.o.length>=2&&Number.isInteger(q.a)&&q.a>=0&&q.a<q.o.length;
+}
+function clean(list){
+  return (list||[]).map(l=>({n:String(l.name||l.n||'Тема'),q:(l.questions||l.q||[]).filter(okq).map(q=>({k:q.k==='tf'?'mc':(q.k||'mc'),t:String(q.t),c:q.c||'',o:(q.o||[]).map(String),a:q.a,p:q.p,w:String(q.w||'')}))})).filter(l=>l.q.length).slice(0,10);
+}
+// ===== Экран: преподаватель =====
+function switchQuest(id,msg,go){
+  STAT=null;save();QID=id;store('kodolandia_cur',id);Q=cq().quest;S=loadS(id);hud();
+  (go||showMap)();
+  if(msg)say(msg,'ok');
+}
+function addQuest(list,name,group,msg){
+  const id='q'+Date.now();LIB.push({id,name,group,quest:list});store('kodolandia_lib',LIB);switchQuest(id,msg,showTeacher);
+}
+// кабинет: список квестов и все действия с ними в одном месте
+function showTeacher(){
+  cur=null;STAT=null;
+  main.innerHTML=`<button class="back" id="back">← На главную</button><h2>Кабинет преподавателя</h2><p class="meta">Создавай квесты из лекций, проверяй вопросы и смотри статистику группы.</p>
+  <button class="next" id="new">+ Создать квест из лекции</button>
+  ${CLOUD?'<h2>Серверы для студентов</h2><div id="rooms" class="meta">Загрузка…</div>':''}
+  <h2>Мои квесты</h2>
+  ${LIB.map(l=>`<div class="srow"><b>${esc(l.name)}</b><small>${esc(l.group||'без группы')} · островов: ${l.quest.length} · вопросов: ${l.quest.reduce((s,x)=>s+x.q.length,0)}${l.id===QID?' · выбран':''}</small><div class="row"><button class="tbtn" data-o="${l.id}">Открыть</button><button class="tbtn" data-e="${l.id}">Редактировать</button><button class="tbtn" data-s="${l.id}">Статистика</button><button class="tbtn" data-c="${l.id}">Копия</button>${CLOUD?`<button class="tbtn" data-p="${l.id}">Создать сервер</button>`:''}${LIB.length>1?`<button class="tbtn dl" data-d="${l.id}">Удалить</button>`:''}</div></div>`).join('')}
+  <div class="row"><button class="tbtn" id="qdl">Скачать выбранный квест</button><label class="tbtn">Открыть квест из файла<input type="file" id="qin" accept=".json" hidden></label></div>`;
+  say('Здесь все твои квесты. Создай новый из лекции или открой существующий и поправь вопросы.');
+  $('back').onclick=showWelcome;$('new').onclick=showCreate;
+  const each=(s,f)=>main.querySelectorAll(s).forEach(b=>b.onclick=()=>f(b.dataset));
+  each('[data-o]',d=>switchQuest(d.o));
+  each('[data-e]',d=>showEdit(d.e));
+  each('[data-s]',d=>switchQuest(d.s,null,showStats));
+  each('[data-c]',d=>{const c=JSON.parse(JSON.stringify(LIB.find(l=>l.id===d.c)));c.id='q'+Date.now();c.name+=' (копия)';LIB.push(c);store('kodolandia_lib',LIB);showTeacher()});
+  each('[data-d]',d=>{
+    if(!confirm('Удалить квест вместе с прогрессом?'))return;
+    LIB=LIB.filter(l=>l.id!==d.d);store('kodolandia_lib',LIB);
+    try{localStorage.removeItem('kodolandia_s_'+d.d)}catch(e){}
+    if(d.d===QID){QID=LIB[0].id;store('kodolandia_cur',QID);Q=cq().quest;S=loadS(QID);hud()}
+    showTeacher();
+  });
+  each('[data-p]',d=>publishRoom(d.p));
+  if(CLOUD)renderRooms();
+  $('qdl').onclick=()=>download('квест.json',{quest:Q,name:cq().name,group:cq().group});
+  $('qin').onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text()),l=clean(d.quest);if(!l.length)throw 0;addQuest(l,d.name||'Квест из файла',d.group||'','Квест загружен. Островов: '+l.length+'.')}catch(x){say('Не получилось прочитать файл квеста.','no')}};
+}
+// создание квеста из лекции: можно выбрать число островов и вопросов
+function showCreate(){
+  cur=null;
+  const opts=(a,b,v)=>Array.from({length:b-a+1},(_,j)=>`<option${a+j===v?' selected':''}>${a+j}</option>`).join('');
+  main.innerHTML=`<button class="back" id="back">← Кабинет</button><h2>Новый квест</h2><p class="meta">Вставь текст лекции. Программа создаст острова, вопросы и ответы.</p>
+  <div class="panel"><div class="row"><input id="subj" maxlength="40" placeholder="Предмет (например, Сети)"><input id="grp" maxlength="20" placeholder="Группа (например, П-21)"></div>
+  <div class="row"><label class="lab">Островов <select id="ni">${opts(2,8,5)}</select></label><label class="lab">Вопросов на остров <select id="nq">${opts(3,8,5)}</select></label></div>
+  <textarea id="lec" rows="9" placeholder="Вставь сюда текст лекции…"></textarea>
+  ${(CLOUD||AI_PROXY)?'<p class="meta">ИИ подключён через сервер, ключ вводить не нужно.</p>':getKey()?'<p class="meta">Ключ ИИ сохранён на этом устройстве. <button class="back" id="forget" type="button">Забыть ключ</button></p>':'<input id="key" type="password" autocomplete="off" placeholder="Ключ Anthropic API (запомнится на этом устройстве)">'}
+  <button class="next" id="gen">Создать квест</button></div>`;
+  say('Вставь лекцию, выбери размер квеста, и я всё сделаю. Для вопросов получше нужен ИИ.');
+  if($('forget'))$('forget').onclick=()=>{forgetKey();showCreate()};
+  $('back').onclick=showTeacher;
+  $('gen').onclick=async()=>{
+    const text=$('lec').value.trim(),key=($('key')||{value:''}).value.trim(),b=$('gen'),isl=+$('ni').value,per=+$('nq').value;
+    if(text.length<150){say('Текст слишком короткий. Вставь хотя бы несколько абзацев лекции.','no');return}
+    if(key)setKey(key);b.disabled=true;b.textContent='Создаю квест…';say('Читаю лекцию и придумываю вопросы…','hm');
+    let res=[],failed=false;
+    if(hasAI()){try{res=await aiGen(text,key,isl,per)}catch(e){failed=true}}
+    const ai=res.length>0;
+    if(!ai)res=clean(offlineGen(text,isl,per));
+    if(!res.length){b.disabled=false;b.textContent='Создать квест';say('Не получилось составить вопросы. Нужен связный текст из полных предложений.','no');return}
+    addQuest(res,$('subj').value.trim()||'Новый квест',$('grp').value.trim(),(ai?'Готово! ИИ составил квест. ':failed?'ИИ не ответил (проверь ключ), поэтому использован простой режим. ':'Квест готов (простой режим). ')+'Островов: '+res.length+', вопросов: '+res.reduce((s,x)=>s+x.q.length,0)+'. Проверь вопросы в редакторе.');
+  };
+}
+
+// ===== Имя студента, файлы и статистика =====
+const qhash=()=>{let h=0;for(const c of JSON.stringify(Q))h=(h*31+c.charCodeAt(0))|0;return h};
+function download(name,obj){
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(obj)],{type:'application/json'}));
+  a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function showName(){
+  main.innerHTML='<h2>Как тебя зовут?</h2><input id="nm" maxlength="30" autocomplete="name" placeholder="Имя и фамилия"><button class="next" id="go">Начать</button>';
+  say('Привет! Я Байт, твой наставник. Назови своё имя, чтобы преподаватель видел твой прогресс.');
+  const go=()=>{const v=$('nm').value.trim();if(!v){say('Мне нужно имя, чтобы сохранить твой прогресс.','hm');return}S.name=v;save();showMap()};
+  $('go').onclick=go;$('nm').onkeydown=e=>{if(e.key==='Enter')go()};
+}
+// студенты: загруженные файлы + этот браузер; учитываются только прохождения текущего квеста
+function students(){
+  const all={};
+  Object.values(load('kodolandia_imp',{})).forEach(v=>{if(v.h===qhash())all[v.name]=v});
+  if(S.name)all[S.name]={name:S.name,stars:S.stars,log:S.log,h:qhash()};
+  return Object.entries(all);
+}
+// очки рейтинга: 10 за каждый верный вопрос, 5 за звезду, 2 за быстрый ответ
+const score=v=>new Set(v.log.filter(e=>e.ok).map(e=>e.i+'-'+e.k)).size*10+Object.values(v.stars).reduce((a,b)=>a+b,0)*5+v.log.filter(e=>e.ok&&e.s<=10).length*2;
+function showStats(){
+  const QQ=STAT?STAT.quest:Q;
+  const st=(STAT?STAT.list:students()),N=QQ.length,hard={},rank=[...st].sort((a,b)=>score(b[1])-score(a[1])),pct=x=>Math.round(x*100);
+  let ans=0,bad=0,prog=0;
+  st.forEach(([,v])=>{
+    prog+=QQ.filter((_,i)=>v.stars[i]).length/N;
+    v.log.forEach(e=>{ans++;if(!e.ok)bad++;const k=e.i+'-'+e.k,h=hard[k]=hard[k]||{i:e.i,k:e.k,n:0,bad:0};h.n++;if(!e.ok)h.bad++});
+  });
+  const top=Object.values(hard).filter(h=>h.bad&&QQ[h.i]).sort((a,b)=>b.bad/b.n-a.bad/a.n||b.n-a.n).slice(0,5);
+  main.innerHTML=`<button class="back" id="back">← Назад</button><h2>Статистика группы</h2><p class="meta">${esc((STAT?STAT.title:qname(cq())))}</p>
+  <div class="cards"><div class="card"><b>${st.length}</b><small>студентов</small></div><div class="card"><b>${st.length?pct(prog/st.length):0}%</b><small>прогресс</small></div><div class="card"><b>${ans?pct(bad/ans):0}%</b><small>ошибок</small></div></div>
+  ${st.length?'':'<p>Пока нет данных. Загрузи файлы результатов студентов.</p>'}
+  <h2>Студенты</h2>
+  ${st.map(([name,v])=>{
+    const done=QQ.filter((_,i)=>v.stars[i]).length,by={};
+    v.log.forEach(e=>{if(!e.ok)by[e.i]=(by[e.i]||0)+1});
+    const wi=Object.keys(by).sort((a,b)=>by[b]-by[a])[0];
+    return `<div class="srow"><b>${esc(name)}</b><div class="pb"><i style="width:${pct(done/N)}%"></i></div><small>Островов: ${done} из ${N} · ошибок: ${v.log.filter(e=>!e.ok).length}</small>${done<N?`<div class="tag">Сейчас на острове: ${esc(QQ[done].n)}</div>`:'<div style="color:var(--mint)">Квест пройден</div>'}${wi!==undefined&&QQ[wi]?`<small>Больше всего ошибок: ${esc(QQ[wi].n)}</small>`:''}</div>`}).join('')}
+  <h2>Рейтинг группы</h2>${rank.map(([n,v],i)=>`<div class="srow"><b>${['🥇','🥈','🥉'][i]||(i+1)+'.'} ${esc(n)}</b><small>Очков: ${score(v)}</small></div>`).join('')||'<p class="meta">Пока никого.</p>'}
+  <h2>Самые трудные вопросы</h2>
+  ${top.map(h=>`<div class="srow"><small>${esc(QQ[h.i].n)}</small><b>${esc(QQ[h.i].q[h.k].t.slice(0,90))}</b><div class="pb bad"><i style="width:${pct(h.bad/h.n)}%"></i></div><small>Ошибок: ${h.bad} из ${h.n}</small></div>`).join('')||'<p class="meta">Ошибок пока нет.</p>'}
+  <div class="row"><button class="tbtn" id="csv">Таблица для Excel</button>${STAT?'':'<label class="tbtn">Загрузить результаты студентов<input type="file" id="imp" accept=".json" multiple hidden></label>'}</div>`;
+  say(STAT?'Данные приходят, когда студенты отвечают. Чтобы увидеть свежие, открой статистику заново.':'Здесь данные тех, кто проходил текущий квест. Студенты скачивают результаты кнопкой внизу карты и присылают файл тебе.');
+  $('back').onclick=showTeacher;
+  $('csv').onclick=exportCsv;
+  if($('imp'))$('imp').onchange=async e=>{
+    const imp=load('kodolandia_imp',{});let bad=0;
+    for(const f of e.target.files){try{const d=JSON.parse(await f.text());if(d.name&&Array.isArray(d.log)&&d.h===qhash())imp[d.h+'|'+d.name]={name:d.name,stars:d.stars||{},log:d.log,h:d.h};else bad++}catch(x){bad++}}
+    store('kodolandia_imp',imp);showStats();
+    if(bad)say('Не удалось загрузить файлов: '+bad+'. Проверь, что студент проходил именно этот квест.','no');
+  };
+}
+// ===== Достижения, список квестов =====
+const ACH=[
+ {id:'first',n:'Первый шаг',d:'Дай первый верный ответ'},
+ {id:'streak',n:'Серия',d:'5 верных ответов подряд'},
+ {id:'fast',n:'Молния',d:'5 верных ответов быстрее 10 секунд'},
+ {id:'clean',n:'Без ошибок',d:'Пройди остров без единой ошибки'},
+ {id:'master',n:'Мастер квеста',d:'Пройди все острова квеста'}
+];
+let tt;
+function toast(m){const e=$('toast');e.textContent=m;e.hidden=false;clearTimeout(tt);tt=setTimeout(()=>{e.hidden=true},3500)}
+function unlock(id){if(ACHV[id])return;ACHV[id]=1;store('kodolandia_ach',ACHV);hud();toast('🏆 Достижение: '+ACH.find(a=>a.id===id).n);sfx('ach')}
+function showAch(){
+  cur=null;
+  main.innerHTML=`<button class="back" id="back">← К карте</button><h2>Достижения</h2>${ACH.map(a=>`<div class="srow"${ACHV[a.id]?'':' style="opacity:.5"'}><b>${ACHV[a.id]?'🏆':'🔒'} ${a.n}</b><small>${a.d}</small></div>`).join('')}`;
+  $('back').onclick=showMap;
+  say('Получено достижений: '+Object.keys(ACHV).length+' из '+ACH.length+'.');
+}
+function showLib(){showTeacher()}
+
+// ===== Звук, конфетти, ИИ-наставник в чате =====
+let AC=null,MUTE=load('kodolandia_mute',false);
+const NOTES={ok:[[660,.09],[880,.14]],bad:[[220,.12],[165,.2]],win:[[523,.1],[659,.1],[784,.1],[1047,.28]],ach:[[784,.08],[988,.08],[1319,.22]]};
+// звуки синтезируются в браузере, отдельные файлы не нужны
+function sfx(k){
+  if(MUTE)return;
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    let t=AC.currentTime;
+    NOTES[k].forEach(([f,d])=>{
+      const o=AC.createOscillator(),g=AC.createGain();
+      o.type=k==='bad'?'sawtooth':'triangle';o.frequency.value=f;
+      g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.001,t+d);
+      o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d);t+=d*.9;
+    });
+  }catch(e){}
+}
+function confetti(){
+  const cols=['#F2C14E','#7BDFB2','#FF7B7B','#8E86D9','#5BA9D6'];
+  for(let i=0;i<30;i++){
+    const s=document.createElement('span');s.className='cf';
+    s.style.cssText=`left:${Math.random()*100}vw;background:${cols[i%5]};animation-duration:${1.6+Math.random()*1.4}s;animation-delay:${Math.random()*.4}s`;
+    document.body.append(s);setTimeout(()=>s.remove(),3500);
+  }
+}
+let AI_PROXY=false; // true, если страницу открыли через server.js, где ключ хранится на сервере
+const getKey=()=>{try{return localStorage.getItem('kodo_key')||''}catch(e){return ''}};
+const setKey=k=>{try{localStorage.setItem('kodo_key',k)}catch(e){}aiStatus()};
+const forgetKey=()=>{try{localStorage.removeItem('kodo_key')}catch(e){}aiStatus()};
+const hasAI=()=>CLOUD||AI_PROXY||!!getKey();
+function aiStatus(){const e=$('aist');if(e)e.textContent=CLOUD?'ИИ подключён через облако':AI_PROXY?'ИИ подключён через сервер':getKey()?'ИИ: ключ сохранён на этом устройстве':'ИИ не подключён'}
+// единая точка вызова ИИ: через сервер (без ключа) или напрямую по ключу
+async function callAI(body){
+  if(CLOUD){
+    const r=await fetch(SB.u+'/functions/v1/ai',{method:'POST',headers:{apikey:SB.k,authorization:'Bearer '+SB.k,'content-type':'application/json'},body:JSON.stringify({...body,token:ROOM?ROOM.token:undefined,teacher:SB.t||undefined})});
+    if(!r.ok)throw new Error('API '+r.status);
+    return (await r.json()).content.map(c=>c.text||'').join('').trim();
+  }
+  const r=AI_PROXY
+    ?await fetch('/api/ai',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)})
+    :await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':getKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error('API '+r.status);
+  return (await r.json()).content.map(c=>c.text||'').join('').trim();
+}
+const ansText=q=>q.k==='text'?[].concat(q.a)[0]:q.k==='match'?q.p.map(x=>x[0]+' → '+x[1]).join('; '):q.o[q.a];
+const MENTOR='Ты Байт, дружелюбный робот-наставник в колледже. Объясняй ошибки студента простыми словами, коротко (до 5 предложений), на русском языке. Сначала скажи, почему выбранный ответ не подходит, потом помоги понять, как прийти к верному. Не ругай, при необходимости приведи маленький пример. Отвечай только по теме вопроса.';
+async function askAI(msgs){return callAI({model:'claude-sonnet-5-5',max_tokens:500,system:MENTOR,messages:msgs})}
+// чат: ИИ объясняет конкретную ошибку, дальше студент может задавать вопросы
+function openChat(q,given){
+  const msgs=[{role:'user',content:'Вопрос: '+q.t+(q.c?'\nКод:\n'+q.c:'')+'\nМой ответ: '+given+'\nВерный ответ: '+ansText(q)+'\nОбъяснение из учебника: '+q.w+'\nОбъясни мою ошибку своими словами.'}];
+  $('chat').innerHTML='<div id="msgs"></div>'+(hasAI()?'':'<input id="ckey" type="password" autocomplete="off" placeholder="Ключ Anthropic API">')+'<div class="row"><input id="cin" placeholder="Спроси Байта ещё что-нибудь…"><button class="tbtn" id="csend">Отправить</button></div>';
+  const add=(who,txt)=>{const d=document.createElement('div');d.className='cmsg '+who;d.textContent=txt;$('msgs').append(d);return d};
+  const run=async()=>{
+    if(!hasAI()){
+      const k=$('ckey')&&$('ckey').value.trim();
+      if(!k){say('Вставь ключ ИИ, чтобы я объяснил подробнее.','hm');return}
+      setKey(k);$('ckey').remove();
+    }
+    const w=add('bot','Байт думает…');
+    try{const a=await askAI(msgs);msgs.push({role:'assistant',content:a});w.textContent=a}
+    catch(e){w.textContent='Не получилось связаться с ИИ. Проверь ключ и интернет.'}
+  };
+  $('csend').onclick=()=>{
+    const v=$('cin').value.trim();
+    if(!v&&hasAI())return;
+    if(v){$('cin').value='';add('me',v);msgs.push({role:'user',content:v})}
+    run();
+  };
+  $('cin').onkeydown=e=>{if(e.key==='Enter')$('csend').click()};
+  run();
+}
+
+// ===== Приветственный экран =====
+function showWelcome(){
+  cur=null;
+  main.innerHTML=`<div class="hero"><h2>Учись как в игре</h2><p>Преподаватель загружает лекцию, а КодоЛандия превращает её в карту островов с вопросами, достижениями и рейтингом группы.</p>
+  <div class="chips"><span>ИИ-наставник</span><span>Достижения и рейтинг</span><span>Статистика группы</span></div>
+  <div class="roles"><button class="role" id="rs"><b>Я студент</b><small>${CLOUD?(ROOM?'Продолжить на сервере «'+esc(ROOM.title)+'»':'Войти на сервер по коду'):S.name?'Продолжить как '+esc(S.name):'Пройти квест по своему предмету'}</small></button><button class="role" id="rt"><b>Я преподаватель</b><small>Создать квест из лекции и смотреть статистику</small></button></div></div>`;
+  $('rs').onclick=()=>CLOUD&&!ROOM?showJoin():showMap();$('rt').onclick=showTeacher;
+  say(S.name?'С возвращением, '+S.name+'! Продолжим?':'Привет! Я Байт, твой наставник. Кто ты сегодня: студент или преподаватель?');
+}
+
+// ===== Редактор квеста, таблица Excel, сертификат =====
+// Преподаватель проверяет и правит вопросы, которые создал ИИ или алгоритм
+function qEdit(q,i,k){
+  const kind=q.k||'mc';
+  let body='';
+  if(kind==='text')body=`<input class="ea" value="${esc([].concat(q.a).join(', '))}" aria-label="Верные ответы через запятую" placeholder="Верные ответы через запятую">`;
+  else if(kind==='match')body=`<textarea class="ep" aria-label="Пары: термин | определение" placeholder="термин | определение, по одной паре в строке">${esc(q.p.map(x=>x[0]+' | '+x[1]).join('\n'))}</textarea>`;
+  else body=q.o.map((o,j)=>`<div class="orow"><input type="radio" class="er" name="r${i}-${k}"${j===q.a?' checked':''} aria-label="Верный вариант"><input type="text" class="eo" value="${esc(o)}"></div>`).join('');
+  return `<div class="qe" data-i="${i}" data-k="${k}"><textarea class="et" aria-label="Текст вопроса">${esc(q.t)}</textarea>${body}<button class="tbtn dl" data-dq="${i}-${k}" style="margin-top:8px">Удалить вопрос</button></div>`;
+}
+const NEWQ=()=>({t:'Новый вопрос',o:['Вариант 1','Вариант 2','Вариант 3'],a:0,w:''});
+// читает поля редактора обратно в структуру квеста
+function collect(d){
+  const nq=d.map((isl,i)=>({n:((main.querySelector('[data-n="'+i+'"]')||{}).value||'').trim()||isl.n,q:[]}));
+  main.querySelectorAll('.qe').forEach(b=>{
+    const i=+b.dataset.i,q=d[i].q[+b.dataset.k];
+    const n={...q,t:b.querySelector('.et').value.trim()||q.t};
+    if(!q.k||q.k==='mc'){
+      const rs=b.querySelectorAll('.er'),os=[...b.querySelectorAll('.eo')].map((x,j)=>({v:x.value.trim(),c:rs[j].checked})).filter(x=>x.v);
+      if(os.length>=2&&os.some(x=>x.c)){n.o=os.map(x=>x.v);n.a=os.findIndex(x=>x.c)}
+    }else if(q.k==='text'){
+      const a=b.querySelector('.ea').value.split(',').map(s=>s.trim()).filter(Boolean);if(a.length)n.a=a;
+    }else{
+      const pp=b.querySelector('.ep').value.split('\n').map(s=>s.split('|').map(z=>z.trim())).filter(x=>x.length===2&&x[0]&&x[1]);if(pp.length>=2)n.p=pp;
+    }
+    nq[i].q.push(n);
+  });
+  return nq;
+}
+function showEdit(id){
+  const l=LIB.find(x=>x.id===id);
+  const draw=d=>{
+    main.innerHTML=`<button class="back" id="back">← Кабинет</button><h2>Редактор квеста</h2><p class="meta">Поправь текст, варианты и верный ответ (кружок). Можно добавлять и удалять вопросы и острова, менять их порядок. После сохранения прогресс студентов по этому квесту сбросится.</p>
+    <div class="panel"><div class="row"><input id="en" maxlength="40" value="${esc(l.name)}" aria-label="Предмет"><input id="eg" maxlength="20" value="${esc(l.group||'')}" aria-label="Группа" placeholder="Группа"></div></div>
+    ${d.map((isl,i)=>`<div class="panel"><div class="row"><input class="en" data-n="${i}" value="${esc(isl.n)}" aria-label="Название острова"><button class="tbtn" data-mu="${i}" aria-label="Остров выше">↑</button><button class="tbtn" data-md="${i}" aria-label="Остров ниже">↓</button><button class="tbtn dl" data-di="${i}">Удалить остров</button></div>${isl.q.map((q,k)=>qEdit(q,i,k)).join('')}<button class="tbtn" data-aq="${i}" style="margin-top:12px">+ Добавить вопрос</button></div>`).join('')}
+    <div class="row"><button class="tbtn" id="ai">+ Добавить остров</button></div><button class="next" id="sv">Сохранить изменения</button>`;
+    $('back').onclick=showTeacher;
+    say('ИИ и алгоритм могут ошибаться, поэтому преподаватель проверяет вопросы до студентов.','hm');
+    const act=(s,f)=>main.querySelectorAll(s).forEach(b=>b.onclick=()=>{const c=collect(d);f(c,b.dataset);draw(c)});
+    act('[data-mu]',(c,x)=>{const i=+x.mu;if(i>0)[c[i-1],c[i]]=[c[i],c[i-1]]});
+    act('[data-md]',(c,x)=>{const i=+x.md;if(i<c.length-1)[c[i+1],c[i]]=[c[i],c[i+1]]});
+    act('[data-di]',(c,x)=>{if(c.length>1)c.splice(+x.di,1)});
+    act('[data-aq]',(c,x)=>c[+x.aq].q.push(NEWQ()));
+    act('[data-dq]',(c,x)=>{const [i,k]=x.dq.split('-').map(Number);c[i].q.splice(k,1)});
+    $('ai').onclick=()=>{const c=collect(d);c.push({n:'Новый остров',q:[NEWQ()]});draw(c)};
+    $('sv').onclick=()=>{
+      const res=clean(collect(d));
+      if(!res.length){say('В квесте должен остаться хотя бы один вопрос.','no');return}
+      l.name=$('en').value.trim()||l.name;l.group=$('eg').value.trim();l.quest=res;
+      store('kodolandia_lib',LIB);
+      try{localStorage.removeItem('kodolandia_s_'+id)}catch(e){}
+      if(id===QID){Q=l.quest;S=loadS(id);hud()}
+      showTeacher();say('Изменения сохранены.','ok');
+    };
+  };
+  draw(JSON.parse(JSON.stringify(l.quest)));
+}
+function exportCsv(){
+  const QQ=STAT?STAT.quest:Q;
+  const st=(STAT?STAT.list:students()),N=QQ.length,rows=[['Студент','Пройдено островов','Всего островов','Верных ответов','Ошибок','Очки']];
+  st.forEach(([n,v])=>rows.push([n,QQ.filter((_,i)=>v.stars[i]).length,N,v.log.filter(e=>e.ok).length,v.log.filter(e=>!e.ok).length,score(v)]));
+  const csv='\ufeff'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download='статистика.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function showCert(){
+  const pts=score({log:S.log,stars:S.stars}),date=new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
+  main.innerHTML=`<button class="back" id="back">← К карте</button><div class="cert"><small>КодоЛандия</small><h2>Сертификат</h2><p>подтверждает, что</p><div class="cname">${esc(S.name)}</div><p>успешно прошёл(а) квест</p><div class="cq">${esc(qname(cq()))}</div><p>Островов пройдено: ${Q.length} из ${Q.length} · Очков: ${pts}</p><p>${date} · Актюбинский высший политехнический колледж</p></div><button class="next" id="prt">Печать / сохранить в PDF</button>`;
+  $('back').onclick=showMap;$('prt').onclick=()=>window.print();
+  say('Поздравляю! Распечатай сертификат или сохрани его в PDF.','ok');confetti();sfx('win');
+}
+
+// ===== Облако: экраны входа и серверы =====
+const roomBar=()=>ROOM?`<p class="meta">Сервер: ${esc(ROOM.title)} · <button class="back" id="leave" type="button">выйти</button></p>`:'';
+function leaveRoom(){
+  ROOM=null;store('kodolandia_room',null);QID=LIB[0].id;Q=cq().quest;S=loadS(QID);hud();showWelcome();
+}
+// студент: код сервера, потом имя
+function showJoin(){
+  cur=null;
+  main.innerHTML=`<button class="back" id="back">← На главную</button><h2>Вход на сервер</h2><p class="meta">Код даёт преподаватель. Потом введи имя, чтобы он видел твой прогресс.</p><div class="panel"><input id="jc" maxlength="8" autocapitalize="characters" autocomplete="off" placeholder="Код сервера" style="text-transform:uppercase;letter-spacing:4px;font-size:20px"><input id="jn" maxlength="40" autocomplete="name" placeholder="Имя и фамилия"><button class="next" id="jgo">Войти</button></div>`;
+  say('Введи код сервера, который назвал преподаватель, и своё имя.');
+  $('back').onclick=showWelcome;
+  const go=async()=>{
+    const code=$('jc').value.trim(),name=$('jn').value.trim();
+    if(!code||name.length<2){say('Нужны код и имя (минимум 2 буквы).','no');return}
+    $('jgo').disabled=true;
+    try{
+      const r=await rpc('kl_join',{p_code:code,p_name:name},true);
+      ROOM={code:code.toUpperCase(),token:r.token,title:r.title,group:r.group,quest:clean(r.quest)};
+      store('kodolandia_room',ROOM);
+      QID='room_'+ROOM.code;Q=ROOM.quest;S=loadS(QID);S.name=name;
+      const pr=r.progress||{};if(pr.stars)S.stars=pr.stars;if(pr.got)S.got=pr.got;
+      save();hud();showMap();say('Ты на сервере «'+ROOM.title+'». Удачи!','ok');
+    }catch(e){$('jgo').disabled=false;say(e.message,'no')}
+  };
+  $('jgo').onclick=go;$('jn').onkeydown=e=>{if(e.key==='Enter')go()};
+}
+// подключение к Supabase (как «⚙ Supabase» в игре)
+function showCfg(){
+  cur=null;
+  main.innerHTML=`<button class="back" id="back">← На главную</button><h2>⚙ Подключение</h2><p class="meta">Project URL и ключ anon (Supabase → Project Settings → API). Без них приложение работает локально. Код преподавателя нужен только для ИИ (тот же, что в секрете TEACHER_CODE).</p><div class="panel"><input id="su" placeholder="https://xxxx.supabase.co" value="${esc(SB.u)}"><input id="sk" placeholder="Ключ anon (public)" value="${esc(SB.k)}"><input id="stc" type="password" autocomplete="off" placeholder="Код преподавателя для ИИ (необязательно)" value="${esc(SB.t)}"><button class="next" id="scf">Сохранить</button></div>`;
+  say('Вставь адрес проекта и публичный ключ anon. Преподавателю ещё нужен код для ИИ.');
+  $('back').onclick=showWelcome;
+  $('scf').onclick=()=>{
+    SB={u:$('su').value.trim().replace(/\/+$/,''),k:$('sk').value.trim(),t:$('stc').value.trim()};
+    store('kodolandia_cfg',SB);CLOUD=!!(SB.u&&SB.k);aiStatus();showWelcome();
+    say(CLOUD?'Подключение сохранено.':'Облако выключено, работаем локально.','ok');
+  };
+}
+// кабинет: серверы, созданные на этом устройстве (код и ключ админа хранятся здесь)
+function renderRooms(){
+  const box=$('rooms'),save=()=>store('kodolandia_servers',SERVERS);
+  box.innerHTML=(SERVERS.length?SERVERS.map((s,i)=>`<div class="srow"><b>${esc(s.title)}</b><small>${esc(s.grp||'без группы')} · код: <span style="color:var(--gold);font:600 20px Rubik,system-ui,sans-serif;letter-spacing:3px">${esc(s.code)}</span>${s.open===false?' · приём закрыт':''}</small><div class="row"><button class="tbtn" data-a="stat" data-i="${i}">Статистика</button><button class="tbtn" data-a="tog" data-i="${i}">${s.open===false?'Открыть приём':'Закрыть приём'}</button><button class="tbtn" data-a="upd" data-i="${i}">Обновить квест</button><button class="tbtn" data-a="key" data-i="${i}">Ключ админа</button><button class="tbtn dl" data-a="del" data-i="${i}">Удалить</button></div></div>`).join(''):'Серверов пока нет. Нажми «Создать сервер» у нужного квеста ниже.')+'<div class="row"><button class="tbtn" id="rsm">Возобновить сервер</button><button class="tbtn" id="cfg2">⚙ Подключение</button></div>';
+  box.querySelectorAll('[data-a]').forEach(b=>b.onclick=async()=>{
+    const i=+b.dataset.i,s=SERVERS[i],a=b.dataset.a,k={p_code:s.code,p_key:s.key};
+    try{
+      if(a==='stat')return showRoomStats(s);
+      if(a==='key'){alert('Ключ админа сервера '+s.code+':\n'+s.key+'\n\nС ним сервер можно возобновить на другом устройстве.');return}
+      if(a==='tog'){await rpc('kl_set_open',{...k,p_open:s.open===false});s.open=s.open===false}
+      if(a==='upd'){
+        if(!confirm('Заменить квест сервера выбранным сейчас квестом «'+cq().name+'»? Результаты студентов могут стать неточными.'))return;
+        await rpc('kl_update',{...k,p_title:cq().name,p_grp:cq().group||'',p_quest:Q});s.title=cq().name;s.grp=cq().group||'';
+      }
+      if(a==='del'){if(!confirm('Удалить сервер и все результаты студентов?'))return;await rpc('kl_delete',k);SERVERS.splice(i,1)}
+      save();renderRooms();
+    }catch(e){say('Ошибка: '+e.message,'no')}
+  });
+  $('rsm').onclick=showResume;$('cfg2').onclick=showCfg;
+}
+function showResume(){
+  cur=null;
+  main.innerHTML=`<button class="back" id="back">← Кабинет</button><h2>Возобновить сервер</h2><p class="meta">Код сервера и ключ админа (его можно посмотреть на устройстве, где сервер был создан).</p><div class="panel"><input id="rc" maxlength="8" placeholder="Код сервера" style="text-transform:uppercase;letter-spacing:4px;font-size:20px"><input id="rk" autocomplete="off" placeholder="Ключ админа"><button class="next" id="rgo">Возобновить</button></div>`;
+  say('Введи код сервера и ключ админа, чтобы управлять сервером с этого устройства.');
+  $('back').onclick=showTeacher;
+  $('rgo').onclick=async()=>{
+    const code=$('rc').value.trim().toUpperCase(),key=$('rk').value.trim();
+    try{
+      const r=await rpc('kl_stats',{p_code:code,p_key:key});
+      if(!SERVERS.some(s=>s.code===code))SERVERS.push({code,key,title:r.title,grp:r.grp,open:r.open});
+      store('kodolandia_servers',SERVERS);showTeacher();say('Сервер '+code+' подключён.','ok');
+    }catch(e){say(e.message,'no')}
+  };
+}
+// создание сервера из квеста: код для студентов и ключ админа
+async function publishRoom(id){
+  const l=LIB.find(x=>x.id===id),key=rnd(20,'abcdefghijkmnpqrstuvwxyz23456789');
+  for(let n=0;n<5;n++){
+    const code=rnd(5,'ABCDEFGHJKLMNPQRSTUVWXYZ23456789');
+    try{
+      await rpc('kl_create_room',{p_code:code,p_key:key,p_title:l.name,p_grp:l.group||'',p_quest:l.quest});
+      SERVERS.push({code,key,title:l.name,grp:l.group||''});store('kodolandia_servers',SERVERS);
+      showTeacher();say('Сервер создан! Код для студентов: '+code,'ok');return;
+    }catch(e){if(!/duplicate|уже/i.test(e.message)){say('Не удалось создать сервер: '+e.message,'no');return}}
+  }
+  say('Не удалось подобрать код, попробуй ещё раз.','no');
+}
+// статистика сервера, обновляется каждые 8 секунд, пока экран открыт
+async function showRoomStats(s){
+  const pull=async()=>{
+    const r=await rpc('kl_stats',{p_code:s.code,p_key:s.key});
+    s.open=r.open;store('kodolandia_servers',SERVERS);
+    STAT={quest:clean(r.quest),title:r.title+(r.grp?' · '+r.grp:''),list:(r.list||[]).map(x=>[x.name,{name:x.name,stars:(x.progress&&x.progress.stars)||{},log:x.log||[],h:0}])};
+  };
+  try{
+    await pull();showStats();
+    clearInterval(STATIV);
+    STATIV=setInterval(async()=>{
+      if(!STAT||!$('csv')){clearInterval(STATIV);return}
+      try{const y=window.scrollY;await pull();showStats();window.scrollTo(0,y)}catch(e){}
+    },8000);
+  }catch(e){say('Не удалось загрузить статистику: '+e.message,'no')}
+}
+
+// ===== События =====
+main.addEventListener('click',e=>{const n=e.target.closest('.node');if(n)openLoc(+n.dataset.i)});
+main.addEventListener('keydown',e=>{
+  if(e.key!=='Enter'&&e.key!==' ')return;
+  const n=e.target.closest&&e.target.closest('.node');
+  if(n){e.preventDefault();openLoc(+n.dataset.i)}
+});
+$('reset').onclick=()=>{if(confirm('Стереть весь прогресс и начать заново?')){S={name:S.name,got:{},stars:{},log:[]};save();hud();showMap()}};
+
+$('teach').onclick=showTeacher;
+$('ach').onclick=showAch;
+$('snd').onclick=()=>{MUTE=!MUTE;store('kodolandia_mute',MUTE);hud();if(!MUTE)sfx('ok')};
+$('exp').onclick=()=>download('результаты-'+(S.name||'студент')+'.json',{name:S.name,stars:S.stars,log:S.log,h:qhash()});
+$('home').onclick=showWelcome;$('cfg').onclick=showCfg;
+if(!CLOUD&&typeof location!=='undefined'&&/^https?:/.test(location.protocol))fetch('/api/health').then(r=>r.json()).then(j=>{AI_PROXY=!!j.ai;aiStatus()}).catch(()=>{});
+hud();aiStatus();showWelcome();
+</script>
+</body>
+</html>
